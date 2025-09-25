@@ -45,3 +45,12 @@ def wrong_session_token():
     response=requests.get(f"{BASE_URL}/vehicles", headers={"Authorization":"djnwjn"})
     
     assert response.status_code == 400
+
+def duplicate_name():
+    payload = {
+        "username": "meneer", 
+        "password": "secret"
+        }
+    response = requests.post(f"{BASE_URL}/login", json=payload)
+    
+    assert response.status_code != 200
