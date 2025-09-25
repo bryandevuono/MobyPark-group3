@@ -4,26 +4,44 @@ BASE_URL = "http://localhost:8000"
 
 # happy flow 
 def test_create_user():
-    payload = {"username": "meneer", "password": "secret"}
+    payload = {
+        "username": "meneer", 
+        "password": "secret"
+        }
     response = requests.post(f"{BASE_URL}/register", json=payload)
 
     assert response.status_code == 200
 
 def test_login():
-    payload = {"username": "meneer", "password": "secret"}
+    payload = {
+        "username": "meneer", 
+        "password": "secret"
+        }
     response = requests.post(f"{BASE_URL}/login", json=payload)
     
     assert response.status_code == 200
-    
+
+
 # sad flow
 def test_create_user_null_name():
-    payload = {"username": "", "password": "secret"}
+    payload = {
+        "username": "", 
+        "password": "secret"
+    }
     response = requests.post(f"{BASE_URL}/register", json=payload)
 
     assert response.status_code != 200
     
 def test_create_user_null_password():
-    payload = {"username": "", "password": ""}
+    payload = {
+        "username": "", 
+        "password": ""
+    }
     response = requests.post(f"{BASE_URL}/register", json=payload)
 
     assert response.status_code != 200
+
+def wrong_session_token():
+    response=requests.get(f"{BASE_URL}/vehicles", headers={"Authorization":"djnwjn"})
+    
+    assert response.status_code == 400
