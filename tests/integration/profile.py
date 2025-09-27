@@ -3,9 +3,9 @@ import requests
 BASE_URL = "http://localhost:8000"
 
 # happy flow
-def test_get_all_vehicles():
+def test_see_profile():
     payload = {
-        "username": "meneer2", 
+        "username": "meneer3", 
         "password": "secret"
     }
     
@@ -18,15 +18,16 @@ def test_get_all_vehicles():
     headers = {
         "Authorization": session_token
     }
-    response = requests.get(f"{BASE_URL}/vehicles", headers=headers)
+    response = requests.get(f"{BASE_URL}/profile", headers=headers)
     
     assert response.status_code == 200
-    
+
 # sad flow
-def test_get_vehicles_no_auth(): 
+
+def test_see_profile_no_token():
     payload = {
-        "username": "", 
-        "password": ""
+        "username": "meneer3", 
+        "password": "secret"
     }
     
     requests.post(f"{BASE_URL}/register", json=payload)
@@ -36,8 +37,8 @@ def test_get_vehicles_no_auth():
     print(session_token)
     
     headers = {
-        "Authorization": session_token
+        "Authorization": ""
     }
-    response = requests.get(f"{BASE_URL}/vehicles", headers=headers)
+    response = requests.get(f"{BASE_URL}/profile", headers=headers)
     
-    assert response.status_code != 200
+    assert response.status_code == 401
