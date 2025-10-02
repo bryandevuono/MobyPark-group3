@@ -40,10 +40,10 @@ def test_create_user_null_password():
     assert response.status_code != 200
 
 
-def test_wrong_session_token():
+def test_wrong_token():
     response = requests.get(f"{BASE_URL}/vehicles", headers={"Authorization": "Bearer dujshdsj"})
 
-    assert response.status_code == 400
+    assert response.status_code == 401
 
 
 def test_duplicate_create_user():
