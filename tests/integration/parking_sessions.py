@@ -10,7 +10,8 @@ def test_get_all_sessions(headers: dict) -> None:
 def test__get_parking_session(headers: dict) -> None:
     response = requests.get(f"{BASE_URL}/parking-lots/1/sessions/1", headers=headers)
     assert response.status_code == 200
-    
+
+
 def test__start_parking_session(headers: dict) -> None:
     payload = {
         "name": "Central Park Garage",
