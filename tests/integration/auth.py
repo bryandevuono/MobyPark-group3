@@ -2,7 +2,6 @@ import requests
 
 BASE_URL = "http://localhost:8000"
 
-
 # happy flow
 def test_create_user():
     payload = {
@@ -39,13 +38,11 @@ def test_create_user_null_name():
 def test_create_user_null_password():
     payload = {"username": "", "password": ""}
     response = requests.post(f"{BASE_URL}/register", json=payload)
-
     assert response.status_code != 200
 
 
 def test_wrong_token():
     response = requests.get(f"{BASE_URL}/vehicles", headers={"Authorization": "Bearer dujshdsj"})
-
     assert response.status_code == 401
 
 
@@ -59,5 +56,4 @@ def test_duplicate_create_user():
         "birth_year": 1990,
     }
     response = requests.post(f"{BASE_URL}/register", json=payload)
-
     assert response.status_code == 400
