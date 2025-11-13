@@ -55,7 +55,7 @@ async def get_vehicles(
 @router.put("/vehicles/{vehicle_id}", response_model=schemas.Vehicle)
 async def update_vehicle(
     vehicle_id: int,
-    vehicle_update: schemas.VehicUpdate,  # ← small typo here
+    vehicle_update: schemas.VehicleUpdate,
     db: AsyncSession = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
     token: HTTPAuthorizationCredentials = Depends(bearer_scheme)
@@ -75,8 +75,7 @@ async def update_vehicle(
     
     if vehicle_update.license_plate is not None:
         vehicle.license_plate = vehicle_update.license_plate
-        vehicle.license_plate_clean = licenceplate_clean(vehicle_update.license_plate)  # ← wrong function name
-    
+        vehicle.license_plate_clean = licenceplate_clean(vehicle_update.license_plate)
     if vehicle_update.make is not None:
         vehicle.make = vehicle_update.make
     if vehicle_update.model is not None:
@@ -91,7 +90,6 @@ async def update_vehicle(
     await db.refresh(vehicle)
     
     return vehicle
-
 @router.delete("/vehicles/{vehicle_id}", response_model=dict)
 async def delete_vehicle(
     vehicle_id: int,
