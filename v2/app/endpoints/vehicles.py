@@ -35,4 +35,19 @@ async def create_vehicle(
     await db.commit()
     await db.refresh(new_vehicle)
     
-    return vehicle
+    return new_vehicle
+
+@router.get("/vehicles", response_model=List[schemas.Vehicle])
+async def get_vehicles(
+    db: AsyncSession = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+    page: PageParams = Depends(page_params),
+    token: HTTPAuthorizationCredentials = Depends(bearer_scheme)
+):
+    check_token(token.credentials)
+    
+    query = select(models.Vehicle).where(models.Vehicle.users_id == current_user.id).offset(page.offset).limit(page.limit)
+    result = await db.execute(query)
+    vehicles = result.scalars().all()
+    
+    return vehicles
