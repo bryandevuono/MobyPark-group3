@@ -1,7 +1,7 @@
 import json
 import sqlite3
 
-RESERVATIONS_JSON = "./tools/import_jsons/data/reservations.json"
+RESERVATIONS_JSON = "./tools/import jsons/data/reservations.json"
 
 def _cents(value) -> int:
     if value in (None, ""):
