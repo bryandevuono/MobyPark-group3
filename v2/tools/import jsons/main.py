@@ -9,6 +9,7 @@ IMPORTERS = [
     "import_vehicles",
     "import_sessions",
     "import_reservations",
+    "import_payments",
 ]
 
 def main():
