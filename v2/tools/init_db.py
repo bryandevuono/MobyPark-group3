@@ -11,20 +11,45 @@ sys.path.insert(0, str(import_jsons_dir))
 db_path = "./data/mobypark.db"
 data_dir = "./data"
 
-if not os.path.exists(data_dir):
-    os.makedirs(data_dir)
+try:
+    # Create data directory if it doesn't exist
+    if not os.path.exists(data_dir):
+        os.makedirs(data_dir)
+        print(f"Created data directory: {data_dir}")
 
-if not os.path.exists(db_path):
-    open(db_path, 'a').close()
-    print(f"Created new database at {db_path}")
+    # Create database file if it doesn't exist
+    if not os.path.exists(db_path):
+        open(db_path, 'a').close()
+        print(f"Created new database at {db_path}")
 
-with open("./tools/init.sql", "r", encoding="utf-8") as f:
-    sql = f.read()
+    # Read and execute SQL schema
+    sql_path = "./tools/init.sql"
+    if not os.path.exists(sql_path):
+        print(f"ERROR: SQL schema file not found at {sql_path}")
+        sys.exit(1)
 
-conn = sqlite3.connect(db_path)
-conn.executescript(sql)
-conn.commit()
-print("Database schema initialized successfully.")
+    with open(sql_path, "r", encoding="utf-8") as f:
+        sql = f.read()
+
+    conn = sqlite3.connect(db_path)
+    conn.executescript(sql)
+    conn.commit()
+    print("Database schema initialized successfully.")
+
+    # Verify that tables were created
+    cursor = conn.cursor()
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+    tables = cursor.fetchall()
+    print(f"Created tables: {', '.join([t[0] for t in tables])}")
+
+    if len(tables) == 0:
+        print("ERROR: No tables were created!")
+        conn.close()
+        sys.exit(1)
+
+except Exception as e:
+    print(f"ERROR during database initialization: {e}")
+    sys.exit(1)
 
 # Import data from JSON files
 # Order is important due to foreign key dependencies!!!!!!!!
@@ -39,6 +64,7 @@ import_modules = [
 ]
 
 print("\nStarting data import...")
+import_errors = []
 for module_name, json_file in import_modules:
     try:
         json_path = f"./tools/import_jsons/data/{json_file}"
@@ -51,10 +77,29 @@ for module_name, json_file in import_modules:
             continue
 
         module.run(conn)
+        print(f"[{module_name}] Successfully imported data from {json_file}")
     except ModuleNotFoundError:
         print(f"[{module_name}] Skipping - module not found")
     except Exception as e:
-        print(f"[{module_name}] Error importing data: {e}")
+        error_msg = f"[{module_name}] Error importing data: {e}"
+        print(error_msg)
+        import_errors.append(error_msg)
+
+# Verify that at least some basic data was imported
+try:
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM users;")
+    user_count = cursor.fetchone()[0]
+    print(f"\nVerification: {user_count} users in database")
+
+    if user_count == 0:
+        print("WARNING: No users were imported. Database may not be properly initialized.")
+except Exception as e:
+    print(f"WARNING: Could not verify database contents: {e}")
 
 conn.close()
-print("\n✓ Database initialized successfully at ./data/mobypark.db")
+
+if import_errors:
+    print(f"\n⚠ Database initialized with {len(import_errors)} import errors")
+else:
+    print("\n✓ Database initialized successfully at ./data/mobypark.db")

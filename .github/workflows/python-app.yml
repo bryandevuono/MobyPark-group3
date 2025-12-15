@@ -52,10 +52,18 @@ jobs:
         run: |
           cd v2
           docker compose up -d
-          sleep 10
+      - name: Wait for database initialization
+        run: |
+          timeout 60 bash -c 'until docker compose -f v2/docker-compose.yml ps db-init | grep -q "exited (0)"; do echo "Waiting for db-init..."; sleep 2; done'
+      - name: Verify database initialization
+        run: |
+          docker exec v2-api-1 ls -la /code/data/mobypark.db
+          docker exec v2-api-1 sqlite3 /code/data/mobypark.db "SELECT COUNT(*) FROM users;" || exit 1
+          echo "Database verification passed"
       - name: Wait for API to be ready
         run: |
-          timeout 60 bash -c 'until curl -f http://localhost:8000/docs > /dev/null 2>&1; do sleep 2; done' || echo "API not ready, continuing anyway"
+          timeout 60 bash -c 'until curl -f http://localhost:8000/docs > /dev/null 2>&1; do echo "Waiting for API..."; sleep 2; done'
+          echo "API is ready"
       - name: Run unit tests
         run: |
           docker exec v2-api-1 pytest tests/unit/ -v --maxfail=1 --disable-warnings
@@ -65,7 +73,10 @@ jobs:
       - name: Show Docker logs on failure
         if: failure()
         run: |
-          docker logs v2-api-1
+          echo "=== DB Init Logs ==="
+          docker logs v2-db-init-1 || true
+          echo "=== API Logs ==="
+          docker logs v2-api-1 || true
       - name: Stop Docker services and cleanup
         if: always()
         run: |
