@@ -1,4 +1,11 @@
 services:
+  db-init:
+    build: .
+    volumes:
+      - ./tools:/code/tools
+      - ./data:/code/data
+    command: python /code/tools/init_db.py
+
   api:
     build: .
     ports:
@@ -11,7 +18,10 @@ services:
     env_file:
       - .env
     depends_on:
-      - elasticsearch
+      db-init:
+        condition: service_completed_successfully
+      elasticsearch:
+        condition: service_started
     logging:
       driver: "json-file"
       options:
