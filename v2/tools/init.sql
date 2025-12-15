@@ -1,48 +1,44 @@
 -- Create users table
 CREATE TABLE IF NOT EXISTS users (
-    user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL,
-    email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
-    full_name TEXT NOT NULL,
-    role TEXT DEFAULT 'USER' CHECK(role IN ('USER', 'ADMIN')),
-    is_active BOOLEAN DEFAULT TRUE,
-    hotel_id INTEGER NULL, 
+    name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    phone TEXT,
+    role TEXT DEFAULT 'user' CHECK(role IN ('user', 'admin')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    birth_year INTEGER,
+    active BOOLEAN DEFAULT TRUE
 );
 
 -- Create parking_lots table
 CREATE TABLE IF NOT EXISTS parking_lots (
-    lot_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
+    location TEXT,
     address TEXT NOT NULL,
-    city TEXT NOT NULL,
-    postal_code TEXT,
-    latitude REAL,
-    longitude REAL,
-    total_capacity INTEGER NOT NULL,
-    available_spots INTEGER NOT NULL,
-    hourly_rate REAL NOT NULL,
-    daily_rate REAL NOT NULL,
-    is_active BOOLEAN DEFAULT TRUE,
-    hotel_id INTEGER NULL,
+    capacity INTEGER NOT NULL,
+    reserved INTEGER DEFAULT 0,
+    tariff REAL,
+    daytariff REAL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    latitude REAL,
+    longitude REAL
 );
 
 -- Create vehicles table
 CREATE TABLE IF NOT EXISTS vehicles (
-    vehicle_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    users_id INTEGER NOT NULL,
+    license_plate_clean TEXT,
     license_plate TEXT UNIQUE NOT NULL,
-    vehicle_name TEXT,
-    brand TEXT,
+    make TEXT,
     model TEXT,
     color TEXT,
-    is_active BOOLEAN DEFAULT TRUE,
+    year INTEGER,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+    FOREIGN KEY (users_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- Create parking_sessions table
@@ -59,9 +55,9 @@ CREATE TABLE IF NOT EXISTS parking_sessions (
     calculated_amount REAL DEFAULT 0.00,
     status TEXT DEFAULT 'ACTIVE' CHECK(status IN ('ACTIVE', 'COMPLETED', 'CANCELLED')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (lot_id) REFERENCES parking_lots(lot_id) ON DELETE CASCADE,
-    FOREIGN KEY (vehicle_id) REFERENCES vehicles(vehicle_id) ON DELETE SET NULL
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (lot_id) REFERENCES parking_lots(id) ON DELETE CASCADE,
+    FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE SET NULL
 );
 
 -- Create reservations table
@@ -78,9 +74,9 @@ CREATE TABLE IF NOT EXISTS reservations (
     total_amount REAL NOT NULL,
     status TEXT DEFAULT 'PENDING' CHECK(status IN ('PENDING', 'CONFIRMED', 'ACTIVE', 'COMPLETED', 'CANCELLED')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (lot_id) REFERENCES parking_lots(lot_id) ON DELETE CASCADE,
-    FOREIGN KEY (vehicle_id) REFERENCES vehicles(vehicle_id) ON DELETE SET NULL
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (lot_id) REFERENCES parking_lots(id) ON DELETE CASCADE,
+    FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE SET NULL
 );
 
 -- Create payments table
@@ -96,7 +92,7 @@ CREATE TABLE IF NOT EXISTS payments (
     status TEXT DEFAULT 'PENDING' CHECK(status IN ('PENDING', 'COMPLETED', 'FAILED', 'REFUNDED')),
     payment_date TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (session_id) REFERENCES parking_sessions(session_id) ON DELETE SET NULL,
     FOREIGN KEY (reservation_id) REFERENCES reservations(reservation_id) ON DELETE SET NULL
 );
@@ -110,26 +106,26 @@ CREATE TABLE hotels (
 
 -- Insert sample data
 -- Default admin user
-INSERT OR IGNORE INTO users (user_id, username, email, password_hash, full_name, role, hotel_id) VALUES
-(1, 'admin', 'admin@mobypark.com', 'admin123', 'Administrator', 'ADMIN', NULL),
-(2, 'testuser', 'test@mobypark.com', 'password123', 'Test User', 'USER', NULL);
+INSERT OR IGNORE INTO users (id, username, password_hash, name, email, phone, role, created_at, birth_year, active) VALUES
+(1, 'admin', 'admin123', 'Administrator', 'admin@mobypark.com', NULL, 'admin', CURRENT_TIMESTAMP, NULL, TRUE),
+(2, 'testuser', 'password123', 'Test User', 'test@mobypark.com', NULL, 'user', CURRENT_TIMESTAMP, NULL, TRUE);
 
 -- Sample parking lots
-INSERT OR IGNORE INTO parking_lots (name, address, city, total_capacity, available_spots, hourly_rate, daily_rate) VALUES
-('Central Station Parking', 'Stationsplein 1', 'Amsterdam', 200, 200, 3.50, 25.00),
-('Airport Parking P1', 'Schiphol Airport', 'Amsterdam', 500, 500, 4.00, 30.00),
-('City Center Mall', 'Dam Square 10', 'Amsterdam', 150, 150, 2.50, 20.00),
-('Rotterdam Centraal', 'Stationsplein 1', 'Rotterdam', 300, 300, 3.00, 22.00),
-('Utrecht CS Parking', 'Stationsplein 14', 'Utrecht', 250, 250, 3.25, 24.00);
+INSERT OR IGNORE INTO parking_lots (name, location, address, capacity, reserved, tariff, daytariff, created_at, latitude, longitude) VALUES
+('Central Station Parking', 'Amsterdam', 'Stationsplein 1', 200, 0, 3.50, 25.00, CURRENT_TIMESTAMP, NULL, NULL),
+('Airport Parking P1', 'Amsterdam', 'Schiphol Airport', 500, 0, 4.00, 30.00, CURRENT_TIMESTAMP, NULL, NULL),
+('City Center Mall', 'Amsterdam', 'Dam Square 10', 150, 0, 2.50, 20.00, CURRENT_TIMESTAMP, NULL, NULL),
+('Rotterdam Centraal', 'Rotterdam', 'Stationsplein 1', 300, 0, 3.00, 22.00, CURRENT_TIMESTAMP, NULL, NULL),
+('Utrecht CS Parking', 'Utrecht', 'Stationsplein 14', 250, 0, 3.25, 24.00, CURRENT_TIMESTAMP, NULL, NULL);
 
 -- Sample vehicles
-INSERT OR IGNORE INTO vehicles (user_id, license_plate, vehicle_name, brand, model, color) VALUES
-(2, '12-ABC-3', 'My Car', 'Toyota', 'Corolla', 'Blue'),
-(2, '45-DEF-6', 'Work Van', 'Ford', 'Transit', 'White');
+INSERT OR IGNORE INTO vehicles (users_id, license_plate_clean, license_plate, make, model, color, year, created_at) VALUES
+(2, '12ABC3', '12-ABC-3', 'Toyota', 'Corolla', 'Blue', NULL, CURRENT_TIMESTAMP),
+(2, '45DEF6', '45-DEF-6', 'Ford', 'Transit', 'White', NULL, CURRENT_TIMESTAMP);
 
 -- Create user and hotel
-INSERT OR IGNORE INTO users (user_id, username, email, password_hash, full_name, role, hotel_id) VALUES
-(3, 'hotel_user', 'test2@mobypark.com', 'password1234', 'Test User', 'USER', NULL);
+INSERT OR IGNORE INTO users (id, username, password_hash, name, email, phone, role, created_at, birth_year, active) VALUES
+(3, 'hotel_user', 'password1234', 'Test User', 'test2@mobypark.com', NULL, 'user', CURRENT_TIMESTAMP, NULL, TRUE);
 
 INSERT OR IGNORE INTO hotels (hotel_id, name, address) VALUES
 (1, 'hotel1', 'Naamlaan 156');

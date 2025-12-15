@@ -5,7 +5,7 @@ import importlib
 from pathlib import Path
 
 tools_dir = Path(__file__).parent
-import_jsons_dir = tools_dir / "import jsons"
+import_jsons_dir = tools_dir / "import_jsons"
 sys.path.insert(0, str(import_jsons_dir))
 
 db_path = "./data/mobypark.db"
@@ -41,7 +41,7 @@ import_modules = [
 print("\nStarting data import...")
 for module_name, json_file in import_modules:
     try:
-        json_path = f"./tools/import jsons/data/{json_file}"
+        json_path = f"./tools/import_jsons/data/{json_file}"
         if not os.path.exists(json_path):
             print(f"[{module_name}] Skipping - {json_file} not found")
             continue
