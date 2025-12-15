@@ -54,7 +54,34 @@ jobs:
           docker compose up -d
       - name: Wait for database initialization
         run: |
-          timeout 60 bash -c 'until docker compose -f v2/docker-compose.yml ps db-init | grep -q "exited (0)"; do echo "Waiting for db-init..."; sleep 2; done'
+          cd v2
+          echo "Waiting for db-init to complete..."
+
+          # Wait for db-init container to finish (max 90 seconds)
+          CONTAINER_NAME="v2-db-init-1"
+          for i in {1..30}; do
+            if docker ps -a --filter "name=$CONTAINER_NAME" --filter "status=exited" --format '{{.Names}}' | grep -q "$CONTAINER_NAME"; then
+              echo "db-init container has exited"
+              break
+            fi
+            echo "Waiting for db-init... ($i/30)"
+            sleep 3
+          done
+
+          # Show db-init logs
+          echo "=== DB Init Logs ==="
+          docker logs $CONTAINER_NAME
+
+          # Check exit code
+          EXIT_CODE=$(docker inspect $CONTAINER_NAME --format='{{.State.ExitCode}}')
+          echo "db-init exit code: $EXIT_CODE"
+
+          if [ "$EXIT_CODE" != "0" ]; then
+            echo "ERROR: db-init failed with exit code $EXIT_CODE"
+            exit 1
+          fi
+
+          echo "Database initialization completed successfully"
       - name: Verify database initialization
         run: |
           docker exec v2-api-1 ls -la /code/data/mobypark.db
